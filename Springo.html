@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>قائمة الطعام - مطعم سبرينغو</title>
+    <!-- Font Awesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f7ff;
+            padding: 20px;
+            padding-bottom: 80px;
+            color: #2c3e50;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f0f7ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #3498db;
+            border-top-color: #2980b9;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 1.3rem;
+            color: #2980b9;
+            font-weight: bold;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .restaurant-header {
+            text-align: center;
+            margin-bottom: 25px;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideUp 0.5s forwards 0.2s;
+        }
+
+        .restaurant-header h1 {
+            font-size: 2.2rem;
+            color: #2980b9;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0 #a8d8ff;
+        }
+
+        .restaurant-header p {
+            font-size: 1rem;
+            color: #7f8c8d;
+            background: rgba(255,255,255,0.7);
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+            margin-top: 8px;
+            border: 1px solid #3498db;
+        }
+
+        .restaurant-header i {
+            margin-left: 5px;
+            color: #3498db;
+        }
+
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            position: sticky;
+            top: 5px;
+            background: rgba(240, 247, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 10px 5px;
+            border-radius: 60px;
+            z-index: 10;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideUp 0.5s forwards 0.3s;
+        }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .category-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 40px;
+            background-color: #fff;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.1);
+            transition: all 0.2s ease;
+            border: 1px solid #d4e6f1;
+            flex: 0 1 auto;
+        }
+
+        .category-btn i {
+            margin-left: 5px;
+            color: #3498db;
+        }
+
+        .category-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+
+        .category-btn.active i {
+            color: white;
+        }
+
+        .menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.1);
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: stretch;
+            transition: all 0.3s ease;
+            border: 1px solid #d4e6f1;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeInUp 0.5s forwards;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 28px rgba(52, 152, 219, 0.2);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .menu-card:nth-child(1) { animation-delay: 0.1s; }
+        .menu-card:nth-child(2) { animation-delay: 0.15s; }
+        .menu-card:nth-child(3) { animation-delay: 0.2s; }
+        .menu-card:nth-child(4) { animation-delay: 0.25s; }
+        .menu-card:nth-child(5) { animation-delay: 0.3s; }
+        .menu-card:nth-child(6) { animation-delay: 0.35s; }
+        .menu-card:nth-child(7) { animation-delay: 0.4s; }
+        .menu-card:nth-child(8) { animation-delay: 0.45s; }
+        .menu-card:nth-child(9) { animation-delay: 0.5s; }
+        .menu-card:nth-child(10) { animation-delay: 0.55s; }
+        .menu-card:nth-child(11) { animation-delay: 0.6s; }
+        .menu-card:nth-child(12) { animation-delay: 0.65s; }
+        .menu-card:nth-child(13) { animation-delay: 0.7s; }
+        .menu-card:nth-child(14) { animation-delay: 0.75s; }
+        .menu-card:nth-child(15) { animation-delay: 0.8s; }
+        .menu-card:nth-child(16) { animation-delay: 0.85s; }
+        .menu-card:nth-child(17) { animation-delay: 0.9s; }
+
+        .item-image {
+            width: 120px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 0 20px 20px 0;
+            position: relative;
+        }
+
+        .item-image.no-image {
+            background: linear-gradient(145deg, #a8d8ff, #7fbfff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2980b9;
+            font-size: 2.5rem;
+        }
+
+        .item-details {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .item-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .item-title h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .item-price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #2980b9;
+            background: #e1f0fa;
+            padding: 5px 12px;
+            border-radius: 30px;
+        }
+
+        .item-description {
+            font-size: 0.85rem;
+            color: #5f6b7a;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge.hot {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .badge.veg {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge.special {
+            background: #e1f0fa;
+            color: #2980b9;
+        }
+
+        .badge.cheese {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .no-items {
+            text-align: center;
+            padding: 50px 20px;
+            background: white;
+            border-radius: 30px;
+            color: #95a5a6;
+            font-size: 1.2rem;
+            border: 2px dashed #bbdefb;
+        }
+
+        .footer-contact {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 2px solid #3498db;
+            box-shadow: 0 -4px 15px rgba(52, 152, 219, 0.1);
+            direction: ltr;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(100%);
+            animation: slideUpFooter 0.5s forwards 0.6s;
+        }
+
+        @keyframes slideUpFooter {
+            to { transform: translateY(0); }
+        }
+
+        .contact-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #34495e;
+            text-decoration: none;
+            font-size: 0.75rem;
+            gap: 5px;
+            transition: transform 0.2s;
+        }
+
+        .contact-item:hover {
+            transform: scale(1.1);
+            color: #3498db;
+        }
+
+        .contact-item i {
+            font-size: 1.4rem;
+            color: #3498db;
+        }
+
+        .welcome-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            background: #2980b9;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(41, 128, 185, 0.3);
+            z-index: 10000;
+            transition: transform 0.3s ease;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .welcome-message.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .welcome-message i {
+            margin-left: 8px;
+        }
+
+        @media (max-width: 450px) {
+            .item-image {
+                width: 100px;
+            }
+            .item-title h3 {
+                font-size: 1.1rem;
+            }
+            .item-price {
+                font-size: 1.1rem;
+                padding: 4px 10px;
+            }
+            .category-btn {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text">
+            جاري تحميل القائمة<span>.</span><span>.</span><span>.</span>
+        </div>
+    </div>
+
+    <div class="welcome-message" id="welcomeMessage">
+        <i class="fas fa-check-circle"></i> تم مسح الباركود! مرحباً بك في مطعم سبرينغو
+    </div>
+
+    <div class="restaurant-header">
+        <h1><i class="fas fa-utensils"></i> مطعم سبرينغو</h1>
+        <p><i class="fas fa-qrcode"></i> قائمة طعام رقمية - امسح الباركود للدخول</p>
+    </div>
+
+    <div class="category-tabs" id="categoryTabs"></div>
+    <div class="menu-items" id="menuContainer"></div>
+
+    <div class="footer-contact">
+        <a href="https://wa.me/966512345678" class="contact-item" target="_blank">
+            <i class="fab fa-whatsapp"></i>
+            <span>واتساب</span>
+        </a>
+        <a href="tel:+966512345678" class="contact-item">
+            <i class="fas fa-phone-alt"></i>
+            <span>اتصال</span>
+        </a>
+        <a href="https://instagram.com/springo_restaurant" class="contact-item" target="_blank">
+            <i class="fab fa-instagram"></i>
+            <span>إنستغرام</span>
+        </a>
+        <a href="#" class="contact-item" id="mapLink">
+            <i class="fas fa-location-dot"></i>
+            <span>الموقع</span>
+        </a>
+    </div>
+
+    <script>
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromBarcode = urlParams.get('barcode') || urlParams.get('qr') || true;
+            
+            if (fromBarcode) {
+                setTimeout(() => {
+                    const welcomeMsg = document.getElementById('welcomeMessage');
+                    welcomeMsg.classList.add('show');
+                    
+                    setTimeout(() => {
+                        welcomeMsg.classList.remove('show');
+                    }, 3000);
+                }, 500);
+            }
+
+            // بيانات القائمة المحدثة
+            const menuData = [
+                // الأطباق الرئيسية (مع إضافة البطاطا)
+                {
+                    id: 1,
+                    name: 'مكس مشاوي',
+                    description: 'شيش طاووق، كفتة، لحم مشوي مع أرز بالزعفران و خضار مشوية',
+                    price: 75000,
+                    category: 'main',
+                    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: true
+                },
+                {
+                    id: 2,
+                    name: 'باستا ألفريدو',
+                    description: 'باستا بالكريمة والدجاج والفطر، مع جبنة بارميزان',
+                    price: 52000,
+                    category: 'main',
+                    image: 'https://images.unsplash.com/photo-1645112411342-4665e1c3b3bf?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: true
+                },
+                {
+                    id: 3,
+                    name: 'صفيحة لحم',
+                    description: 'عجينة رقيقة بحشوة لحم الضأن والطحينية',
+                    price: 32000,
+                    category: 'main',
+                    image: 'https://images.unsplash.com/photo-1617098479486-65c511d927b8?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: true
+                },
+                {
+                    id: 4,
+                    name: 'بطاطا عادي',
+                    description: 'بطاطا مقلية مقرمشة مع ملح وتوابل',
+                    price: 12000,
+                    category: 'main',
+                    image: 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 5,
+                    name: 'بطاطا تشيز',
+                    description: 'بطاطا مقلية مع صوص الجبنة الذائبة',
+                    price: 18000,
+                    category: 'main',
+                    image: 'https://images.unsplash.com/photo-1606755456206-b25206cde27e?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: true,
+                    isSpecial: false,
+                    hasCheese: true
+                },
+
+                // الساندويشات (المطلوبة)
+                {
+                    id: 6,
+                    name: 'زنجر',
+                    description: 'ساندويش دجاج مقرمش حار مع صوص الزنجر',
+                    price: 22000,
+                    category: 'sandwich',
+                    image: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: true
+                },
+                {
+                    id: 7,
+                    name: 'فرانشيسكو',
+                    description: 'ساندويش دجاج مقرمش مع صوص فرنسي وخس',
+                    price: 24000,
+                    category: 'sandwich',
+                    image: 'https://images.unsplash.com/photo-1606755456206-b25206cde27e?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: true
+                },
+                {
+                    id: 8,
+                    name: 'تشيز برغر',
+                    description: 'برغر لحم مع جبنة، خس، طماطم، مخلل',
+                    price: 25000,
+                    category: 'sandwich',
+                    image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: false
+                },
+                {
+                    id: 9,
+                    name: 'برغر دجاج',
+                    description: 'برغر دجاج مشوي مع خس ومايونيز',
+                    price: 23000,
+                    category: 'sandwich',
+                    image: 'https://images.unsplash.com/photo-1606755456206-b25206cde27e?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: false
+                },
+                {
+                    id: 10,
+                    name: 'برغر لحمة',
+                    description: 'برغر لحم بقري مع خضار طازجة',
+                    price: 26000,
+                    category: 'sandwich',
+                    image: 'https://images.unsplash.com/photo-1553979459-d2229ba518b3?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: false
+                },
+
+                // المقبلات (اللبنة والزيتون...)
+                {
+                    id: 11,
+                    name: 'لبنة وزيتون',
+                    description: 'لبنة طازجة مع زيتون أسود وأخضر',
+                    price: 15000,
+                    category: 'appetizer',
+                    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291776?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 12,
+                    name: 'مربى وزبدة',
+                    description: 'مربى مشكلة مع زبدة طبيعية',
+                    price: 12000,
+                    category: 'appetizer',
+                    image: 'https://images.unsplash.com/photo-1589308454676-22dc8d6b6045?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 13,
+                    name: 'مرتديلا',
+                    description: 'مرتديلا عادي',
+                    price: 18000,
+                    category: 'appetizer',
+                    image: 'https://images.unsplash.com/photo-1607513746994-51f730a44832?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: false,
+                    isSpecial: false
+                },
+                {
+                    id: 14,
+                    name: 'مرتديلا وبيض',
+                    description: 'مرتديلا مع بيض مقلي',
+                    price: 22000,
+                    category: 'appetizer',
+                    image: 'https://images.unsplash.com/photo-1607513746994-51f730a44832?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: false
+                },
+                {
+                    id: 15,
+                    name: 'مرتديلا بقشقوان',
+                    description: 'مرتديلا مع جبنة قشقوان ذائبة',
+                    price: 25000,
+                    category: 'appetizer',
+                    image: 'https://images.unsplash.com/photo-1607513746994-51f730a44832?w=200&h=150&fit=crop',
+                    isHot: true,
+                    isVeg: false,
+                    isSpecial: true,
+                    hasCheese: true
+                },
+
+                // المشروبات (المطلوبة)
+                {
+                    id: 16,
+                    name: 'لبن عيران',
+                    description: 'لبن عيران طبيعي منعش',
+                    price: 8000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1626200412343-74b859ad97e6?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 17,
+                    name: 'كولا تنك',
+                    description: 'كولا علبة 330 مل',
+                    price: 5000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 18,
+                    name: 'بيبسي',
+                    description: 'بيبسي علبة 330 مل',
+                    price: 5000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 19,
+                    name: 'سفن أب',
+                    description: 'سفن أب علبة 330 مل',
+                    price: 5000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 20,
+                    name: 'ميرندا برتقال',
+                    description: 'ميرندا برتقال علبة 330 مل',
+                    price: 5000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 21,
+                    name: 'كولا بلاستيك',
+                    description: 'كولا قنينة بلاستيك 1.5 لتر',
+                    price: 15000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 22,
+                    name: 'سفن أب بلاستيك',
+                    description: 'سفن أب قنينة بلاستيك 1.5 لتر',
+                    price: 15000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+                {
+                    id: 23,
+                    name: 'برتقال بلاستيك',
+                    description: 'عصير برتقال قنينة بلاستيك 1.5 لتر',
+                    price: 15000,
+                    category: 'drink',
+                    image: 'https://images.unsplash.com/photo-1629203851339-3728d6e4c3a4?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                },
+
+                // السلطات (المطلوبة)
+                {
+                    id: 24,
+                    name: 'سلطة سويسرية',
+                    description: 'سلطة خضراء مع جبنة سويسرية وصلصة خاصة',
+                    price: 25000,
+                    category: 'salad',
+                    image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: true
+                },
+                {
+                    id: 25,
+                    name: 'سلطة سيزر',
+                    description: 'سلطة خس مع دجاج، خبز محمص، جبنة بارميزان وصلصة سيزر',
+                    price: 28000,
+                    category: 'salad',
+                    image: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: false,
+                    isSpecial: true
+                },
+                {
+                    id: 26,
+                    name: 'سلطة فتوش',
+                    description: 'خس، خيار، طماطم، فجل، بقدونس، نعناع، وخبز مقرمش',
+                    price: 22000,
+                    category: 'salad',
+                    image: 'https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=200&h=150&fit=crop',
+                    isHot: false,
+                    isVeg: true,
+                    isSpecial: false
+                }
+            ];
+
+            // أسماء التصنيفات
+            const categoryNames = {
+                main: 'أطباق رئيسية',
+                appetizer: 'مقبلات',
+                sandwich: 'ساندويشات',
+                salad: 'سلطات',
+                drink: 'مشروبات',
+                dessert: 'حلويات'
+            };
+
+            const categories = [...new Set(menuData.map(item => item.category))];
+            
+            const categoryTabs = document.getElementById('categoryTabs');
+            const menuContainer = document.getElementById('menuContainer');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const body = document.body;
+
+            let activeCategory = 'all';
+
+            function renderItems(category) {
+                const filteredItems = category === 'all' 
+                    ? menuData 
+                    : menuData.filter(item => item.category === category);
+
+                if (filteredItems.length === 0) {
+                    menuContainer.innerHTML = `<div class="no-items"><i class="fas fa-sad-tear"></i> لا توجد أصناف في هذا التصنيف</div>`;
+                    return;
+                }
+
+                let htmlStr = '';
+                filteredItems.forEach((item, index) => {
+                    const imageStyle = item.image ? `background-image: url('${item.image}');` : '';
+                    const imageClass = item.image ? '' : 'no-image';
+                    const imageContent = !item.image ? '<i class="fas fa-image"></i>' : '';
+
+                    const badges = [];
+                    if (item.isHot) badges.push('<span class="badge hot"><i class="fas fa-pepper-hot"></i> حار</span>');
+                    if (item.isVeg) badges.push('<span class="badge veg"><i class="fas fa-leaf"></i> نباتي</span>');
+                    if (item.isSpecial) badges.push('<span class="badge special"><i class="fas fa-star"></i> خاص</span>');
+                    if (item.hasCheese) badges.push('<span class="badge cheese"><i class="fas fa-cheese"></i> بالجبنة</span>');
+
+                    const priceFormatted = (item.price / 1000).toFixed(3);
+
+                    htmlStr += `
+                        <div class="menu-card" data-category="${item.category}" style="animation-delay: ${0.1 + index * 0.05}s">
+                            <div class="item-image ${imageClass}" style="${imageStyle}">${imageContent}</div>
+                            <div class="item-details">
+                                <div class="item-title">
+                                    <h3>${item.name}</h3>
+                                    <span class="item-price">${priceFormatted}</span>
+                                </div>
+                                <div class="item-description">
+                                    <span>${item.description}</span>
+                                </div>
+                                <div class="item-description" style="margin-top:4px;">
+                                    ${badges.join(' ')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                menuContainer.innerHTML = htmlStr;
+            }
+
+            function buildCategoryTabs() {
+                let buttonsHtml = `
+                    <button class="category-btn active" data-category="all"><i class="fas fa-list-ul"></i> الكل</button>
+                `;
+
+                categories.forEach(cat => {
+                    const catName = categoryNames[cat] || cat;
+                    let icon = 'fa-utensils';
+                    if (cat === 'appetizer') icon = 'fa-plate-wheat';
+                    else if (cat === 'sandwich') icon = 'fa-burger';
+                    else if (cat === 'salad') icon = 'fa-leaf';
+                    else if (cat === 'drink') icon = 'fa-mug-saucer';
+                    else if (cat === 'dessert') icon = 'fa-cake-candles';
+                    
+                    buttonsHtml += `
+                        <button class="category-btn" data-category="${cat}"><i class="fas ${icon}"></i> ${catName}</button>
+                    `;
+                });
+
+                categoryTabs.innerHTML = buttonsHtml;
+
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        const category = this.dataset.category;
+                        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        activeCategory = category;
+                        renderItems(activeCategory);
+                        
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            }
+
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    body.classList.add('loaded');
+                    
+                    buildCategoryTabs();
+                    renderItems('all');
+                    
+                    const catParam = urlParams.get('cat');
+                    if (catParam && categories.includes(catParam)) {
+                        const btn = document.querySelector(`.category-btn[data-category="${catParam}"]`);
+                        if (btn) {
+                            setTimeout(() => {
+                                btn.click();
+                            }, 100);
+                        }
+                    }
+                }, 1500);
+            });
+
+            document.getElementById('mapLink').href = 'https://maps.app.goo.gl/example';
+        })();
+    </script>
+</body>
+</html>
